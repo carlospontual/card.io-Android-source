@@ -69,8 +69,18 @@ class CardNumberValidator implements Validator {
             return false;
         }
 
+        boolean result;
         CardType type = CardType.fromCardNumber(numberString);
-        return (numberString.length() == type.numberLength());
+        result = (numberString.length() == type.numberLength());
+
+        if (!result && CreditCardNumber.isValidEloCard(numberString)) {
+            result = CreditCardNumber.isValidEloLength(numberString.length());
+        }
+
+        if (!result && CreditCardNumber.isValidHiperCard(numberString)) {
+            result = CreditCardNumber.isValidHiperLength(numberString.length());
+        }
+        return result;
     }
 
     @Override
@@ -79,7 +89,9 @@ class CardNumberValidator implements Validator {
             return false;
         }
         if (!CreditCardNumber.passesLuhnChecksum(numberString)) {
-            return false;
+            if (!CreditCardNumber.isValidHiperCard(numberString)) {
+                return false;
+            }
         }
 
         // Log.v(TAG,"card number is valid");

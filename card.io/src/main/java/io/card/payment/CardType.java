@@ -53,6 +53,14 @@ public enum CardType {
      */
     MAESTRO("Maestro"),
     /**
+     * Elo
+     */
+    ELO("Elo"),
+    /**
+     * HiperCard
+     */
+    HIPERCARD("Hiper"),
+    /**
      * Unknown card type.
      */
     UNKNOWN("Unknown"),
@@ -119,6 +127,8 @@ public enum CardType {
             case MASTERCARD:
             case VISA:
             case DISCOVER:
+            case ELO:
+            case HIPERCARD:
                 result = 16;
                 break;
             case DINERSCLUB:
@@ -150,6 +160,8 @@ public enum CardType {
             case VISA:
             case DISCOVER:
             case DINERSCLUB:
+            case ELO:
+            case HIPERCARD:
                 result = 3;
                 break;
             case UNKNOWN:
@@ -331,7 +343,15 @@ public enum CardType {
         if (possibleCardTypes.size() > 1) {
             return CardType.INSUFFICIENT_DIGITS;
         } else if (possibleCardTypes.size() == 1) {
-            return possibleCardTypes.iterator().next();
+            CardType currentType = possibleCardTypes.iterator().next();
+            if (currentType == MAESTRO) {
+                if (CreditCardNumber.isValidEloCard(numStr)) {
+                    currentType = ELO;
+                } else if (CreditCardNumber.isValidHiperCard(numStr)) {
+                    currentType = HIPERCARD;
+                }
+            }
+            return currentType;
         } else {
             return CardType.UNKNOWN;
         }

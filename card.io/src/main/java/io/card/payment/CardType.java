@@ -344,7 +344,7 @@ public enum CardType {
             return CardType.INSUFFICIENT_DIGITS;
         } else if (possibleCardTypes.size() == 1) {
             CardType currentType = possibleCardTypes.iterator().next();
-            if (currentType == MAESTRO) {
+            if (currentType == MAESTRO || currentType == DINERSCLUB) {
                 if (CreditCardNumber.isValidEloCard(numStr)) {
                     currentType = ELO;
                 } else if (CreditCardNumber.isValidHiperCard(numStr)) {

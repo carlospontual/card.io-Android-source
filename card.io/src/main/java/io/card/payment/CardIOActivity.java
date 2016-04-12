@@ -114,6 +114,8 @@ public final class CardIOActivity extends Activity {
      */
     public static final String EXTRA_SCAN_RESULT = "io.card.payment.scanResult";
 
+    public static final String EXTRA_USE_CUSTOM_THEME = "io.card.payment.useCustomTheme";
+
     /**
      * Boolean extra indicating card was not scanned.
      */
@@ -294,6 +296,7 @@ public final class CardIOActivity extends Activity {
     private RelativeLayout mUIBar;
     private FrameLayout mMainLayout;
     private boolean useApplicationTheme;
+    private boolean useCustomTheme;
 
     static private int numActivityAllocations;
 
@@ -334,8 +337,19 @@ public final class CardIOActivity extends Activity {
 
         final Intent clientData = this.getIntent();
 
-        useApplicationTheme = getIntent().getBooleanExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, false);
-        ActivityHelper.setActivityTheme(this, useApplicationTheme);
+        int customThemeId = getIntent().getIntExtra(CardIOActivity.EXTRA_USE_CUSTOM_THEME, 0);
+        if (customThemeId != 0) {
+            try {
+                setTheme(customThemeId);
+                useApplicationTheme = true;
+                useCustomTheme = true;
+            } catch (Exception ioe) {
+                ActivityHelper.setActivityTheme(this, false);
+            }
+        } else {
+            useApplicationTheme = getIntent().getBooleanExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, false);
+            ActivityHelper.setActivityTheme(this, useApplicationTheme);
+        }
 
         LocalizedStrings.setLanguage(clientData);
 

@@ -32,6 +32,8 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.lang.Exception;
+
 import io.card.payment.i18n.LocalizedStrings;
 import io.card.payment.i18n.StringKey;
 import io.card.payment.ui.ActivityHelper;
@@ -84,6 +86,7 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
     private boolean autoAcceptDone;
     private String labelLeftPadding;
     private boolean useApplicationTheme;
+    private boolean useCustomTheme;;
     private int defaultTextColor;
 
     private static final String TAG = DataEntryActivity.class.getSimpleName();
@@ -99,8 +102,19 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
             return;
         }
 
-        useApplicationTheme = getIntent().getBooleanExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, false);
-        ActivityHelper.setActivityTheme(this, useApplicationTheme);
+        int customThemeId = getIntent().getIntExtra(CardIOActivity.EXTRA_USE_CUSTOM_THEME, 0);
+        if (customThemeId != 0) {
+            try {
+                setTheme(customThemeId);
+                useApplicationTheme = true;
+                useCustomTheme = true;
+            } catch (Exception ioe) {
+                ActivityHelper.setActivityTheme(this, false);
+            }
+        } else {
+            useApplicationTheme = getIntent().getBooleanExtra(CardIOActivity.EXTRA_KEEP_APPLICATION_THEME, false);
+            ActivityHelper.setActivityTheme(this, useApplicationTheme);
+        }
 
         defaultTextColor = new TextView(this).getTextColors().getDefaultColor();
 
@@ -159,10 +173,8 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
                 activityTitleTextView.setTextColor(Appearance.PAY_BLUE_COLOR);
             }
             mainLayout.addView(activityTitleTextView);
-            ViewUtil.setPadding(activityTitleTextView, null, null, null,
-                    Appearance.VERTICAL_SPACING);
-            ViewUtil.setDimensions(activityTitleTextView, LayoutParams.WRAP_CONTENT,
-                    LayoutParams.WRAP_CONTENT);
+            ViewUtil.setPadding(activityTitleTextView, null, null, null, Appearance.VERTICAL_SPACING);
+            ViewUtil.setDimensions(activityTitleTextView, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 
             LinearLayout numberLayout = new LinearLayout(this);
             numberLayout.setOrientation(LinearLayout.VERTICAL);
@@ -180,11 +192,10 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
             numberEdit.setId(editTextIdCounter++);
             numberEdit.setMaxLines(1);
             numberEdit.setImeOptions(EditorInfo.IME_ACTION_DONE);
-            numberEdit.setTextAppearance(getApplicationContext(),
-                    android.R.attr.textAppearanceLarge);
+            numberEdit.setTextAppearance(getApplicationContext(), android.R.attr.textAppearanceLarge);
             numberEdit.setInputType(InputType.TYPE_CLASS_PHONE);
             numberEdit.setHint("1234 5678 1234 5678");
-            if(! useApplicationTheme ) {
+            if(useCustomTheme || ! useApplicationTheme ) {
                 numberEdit.setHintTextColor(Appearance.TEXT_COLOR_EDIT_TEXT_HINT);
             }
 
@@ -230,7 +241,7 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
                     android.R.attr.textAppearanceLarge);
             expiryEdit.setInputType(InputType.TYPE_CLASS_PHONE);
             expiryEdit.setHint(LocalizedStrings.getString(StringKey.EXPIRES_PLACEHOLDER));
-            if(! useApplicationTheme ) {
+            if(useCustomTheme || ! useApplicationTheme ) {
                 expiryEdit.setHintTextColor(Appearance.TEXT_COLOR_EDIT_TEXT_HINT);
             }
 
@@ -275,8 +286,12 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
             cvvEdit.setImeOptions(EditorInfo.IME_ACTION_DONE);
             cvvEdit.setTextAppearance(getApplicationContext(), android.R.attr.textAppearanceLarge);
             cvvEdit.setInputType(InputType.TYPE_CLASS_PHONE);
-            cvvEdit.setHint("123");
-            if(! useApplicationTheme ) {
+            if (useCustomTheme) {
+                cvvEdit.setHint("###");
+            } else {
+                cvvEdit.setHint("123");
+            }
+            if(useCustomTheme || ! useApplicationTheme ) {
                 cvvEdit.setHintTextColor(Appearance.TEXT_COLOR_EDIT_TEXT_HINT);
             }
 
@@ -329,7 +344,7 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
             } else {
                 postalCodeEdit.setInputType(InputType.TYPE_CLASS_TEXT);
             }
-            if(! useApplicationTheme ) {
+            if(useCustomTheme || ! useApplicationTheme ) {
                 postalCodeEdit.setHintTextColor(Appearance.TEXT_COLOR_EDIT_TEXT_HINT);
             }
 
@@ -530,7 +545,12 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
                 FixedLengthValidator v = (FixedLengthValidator) cvvValidator;
                 int length = type.cvvLength();
                 v.requiredLength = length;
-                cvvEdit.setHint(length == 4 ? "1234" : "123");
+                if (useCustomTheme) {
+                    cvvEdit.setHint(length == 4 ? "####" : "###");
+                } else {
+                    cvvEdit.setHint(length == 4 ? "1234" : "123");
+                }
+
             }
         } else if (expiryEdit != null && et == expiryEdit.getText()) {
             if (expiryValidator.hasFullLength()) {
@@ -622,7 +642,7 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
             cardholderNameEdit.setTextAppearance(getApplicationContext(),
                     android.R.attr.textAppearanceLarge);
             cardholderNameEdit.setInputType(InputType.TYPE_CLASS_TEXT);
-            if(! useApplicationTheme ) {
+            if(useCustomTheme || ! useApplicationTheme ) {
                 cardholderNameEdit.setHintTextColor(Appearance.TEXT_COLOR_EDIT_TEXT_HINT);
             }
 

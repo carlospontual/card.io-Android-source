@@ -275,6 +275,10 @@ public enum CardType {
         intervalLookup.put(getNewPair("66", "69"), CardType.MAESTRO);           // Maestro
         intervalLookup.put(getNewPair("88", null), CardType.DISCOVER);          // China UnionPay (Discover)
 
+
+        intervalLookup.put(getNewPair("6062820", "6062829"), CardType.HIPERCARD); // Brazil Hipercard
+        intervalLookup.put(getNewPair("636297", null), CardType.ELO);          // Brazil ELO
+
         for (Entry<Pair<String, String>, CardType> entry : getIntervalLookup().entrySet()) {
             minDigits = Math.max(minDigits, entry.getKey().first.length());
             if (entry.getKey().second != null) {
@@ -344,7 +348,7 @@ public enum CardType {
             return CardType.INSUFFICIENT_DIGITS;
         } else if (possibleCardTypes.size() == 1) {
             CardType currentType = possibleCardTypes.iterator().next();
-            if (currentType == MAESTRO || currentType == DINERSCLUB) {
+            if (currentType == MAESTRO || currentType == DINERSCLUB || currentType == DISCOVER) {
                 if (CreditCardNumber.isValidEloCard(numStr)) {
                     currentType = ELO;
                 } else if (CreditCardNumber.isValidHiperCard(numStr)) {

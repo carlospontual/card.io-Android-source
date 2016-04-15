@@ -732,7 +732,11 @@ public final class CardIOActivity extends Activity {
      */
     public static boolean canReadCardWithCamera() {
         try {
-            return Util.hardwareSupported();
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                return Util.hardwareSupportedMHigher();
+            } else {
+                return Util.hardwareSupported();
+            }
         } catch (CameraUnavailableException e) {
             return false;
         } catch (RuntimeException e) {

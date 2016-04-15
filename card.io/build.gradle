@@ -11,6 +11,8 @@ def getBuildVersion = { ->
     "git describe --match=*[0-9]*.[0-9]*.*[0-9] --tags --dirty --always".execute().text.trim()
 }
 
+def appAbi = "all"
+
 ext {
     build_time = new Date().format("MM/dd/yyyy HH:mm:ss Z")
     build_year = new Date().format("yyyy")
@@ -48,6 +50,12 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-build.cfg'
         }
+
+        nonsixtyfour {
+            appAbi = "armeabi armeabi-v7a mips x86 arm64-v8a"
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-build.cfg'
+        }
     }
 
     task cleanNative(type: Exec, description: 'Clean JNI object files') {
@@ -59,6 +67,7 @@ android {
 
     task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
         commandLine "$android.ndkDirectory/ndk-build",
+                "APP_ABI=$appAbi",
                 '-C', file('src/main/jni').absolutePath,
                 '-j', Runtime.runtime.availableProcessors(),
                 'all'
@@ -89,7 +98,7 @@ android.libraryVariants.all { variant ->
     def variantName = variant.baseName
 
 
-    if (buildType.equalsIgnoreCase("debug")) {
+    if (buildType.equalsIgnoreCase("debug") || buildType.equalsIgnoreCase("nonsixtyfour")) {
         return;
     }
 

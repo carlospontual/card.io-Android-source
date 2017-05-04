@@ -6,9 +6,7 @@ package io.card.payment;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
@@ -17,8 +15,6 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.DateKeyListener;
 import android.text.method.DigitsKeyListener;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -91,10 +87,10 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
 
     private static final String TAG = DataEntryActivity.class.getSimpleName();
 
+    @SuppressWarnings("ResourceType")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate()");
 
         if (null == getIntent().getExtras()) {
             // extras should never be null.  This is some weird android state that we handle by just going back.
@@ -431,9 +427,8 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
         Drawable icon = null;
         boolean usePayPalActionBarIcon = getIntent().getBooleanExtra(CardIOActivity.EXTRA_USE_PAYPAL_ACTIONBAR_ICON, true);
         if (usePayPalActionBarIcon) {
-            Bitmap bitmap = ViewUtil.base64ToBitmap(Base64EncodedImages.paypal_monogram_actionbar_icon, this,
-                    DisplayMetrics.DENSITY_HIGH);
-            icon = new BitmapDrawable(this.getResources(), bitmap);
+            //noinspection deprecation
+            icon = getResources().getDrawable(R.drawable.cio_ic_paypal_monogram);
         }
 
         // update UI to reflect expiry validness
@@ -476,7 +471,6 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume()");
 
         getWindow().setFlags(0, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         ActivityHelper.setFlagSecure(this);
@@ -493,8 +487,6 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
             getWindow()
                     .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
-
-        Log.i(TAG, "ready for manual entry"); // used by tests. don't delete.
     }
 
     private EditText advanceToNextEmptyField() {
@@ -515,8 +507,6 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
         doneBtn.setEnabled(numberValidator.isValid() && expiryValidator.isValid()
                 && cvvValidator.isValid() && postalCodeValidator.isValid()
                 && cardholderNameValidator.isValid());
-
-        Log.d(TAG, "setting doneBtn.enabled=" + doneBtn.isEnabled());
 
         if (autoAcceptDone && numberValidator.isValid() && expiryValidator.isValid()
                 && cvvValidator.isValid() && postalCodeValidator.isValid()
@@ -618,6 +608,7 @@ public final class DataEntryActivity extends Activity implements TextWatcher {
 
     }
 
+    @SuppressWarnings("ResourceType")
     private void addCardholderNameIfNeeded(ViewGroup mainLayout) {
         boolean requireCardholderName = getIntent().getBooleanExtra(CardIOActivity.EXTRA_REQUIRE_CARDHOLDER_NAME, false);
         if (requireCardholderName) {

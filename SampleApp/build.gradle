@@ -1,40 +1,38 @@
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.0.0'
+        classpath 'com.android.tools.build:gradle:2.3.0'
     }
 }
 
 repositories {
-    mavenCentral()
+    jcenter()
+    maven {
+        url "https://jitpack.io"
+    }
 }
 
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion '23.0.1'
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
 
-    signingConfigs {
-        myConfig {
-            storeFile file("example.keystore")
-            storePassword "abc123"
-            keyAlias "example-alias"
-            keyPassword "abc123"
-        }
+    defaultConfig {
+        applicationId "io.card.development"
+        minSdkVersion 18
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0.0"
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
 
     buildTypes {
-        debug {
-            applicationIdSuffix ".debug"
-        }
-
         release {
             minifyEnabled true
             proguardFile getDefaultProguardFile('proguard-android.txt')
-            signingConfig signingConfigs.myConfig
         }
     }
 
@@ -54,5 +52,9 @@ dependencies {
     } else {
         compile 'io.card:android-sdk:REPLACE_VERSION'
     }
-}
 
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.4'
+
+    androidTestCompile "com.android.support.test.espresso:espresso-core:2.2.2"
+    androidTestCompile "com.github.lkorth:device-automator:01d85912ec"
+}

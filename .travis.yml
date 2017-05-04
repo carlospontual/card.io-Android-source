@@ -1,34 +1,40 @@
-sudo: false
+sudo: true
 addons:
   apt:
     packages:
-    - p7zip-full
+      - p7zip-full
 language: android
-jdk: oraclejdk7
-env:
-  matrix:
-  - ANDROID_TARGET=android-23  ANDROID_ABI=armeabi-v7a
+jdk: oraclejdk8
 android:
   components:
-  - android-23
-  - build-tools-23.0.1
-  - platform-tools
-  - tools
+    - tools
+    - tools
+    - android-25
+    - android-22
+    - sys-img-armeabi-v7a-android-22
+    - build-tools-25.0.2
+    - platform-tools
+    - extra-android-support
+    - extra-android-m2repository
+    - extra-google-m2repository
 before_install:
-- export ANDROID_HOME=/usr/local/android-sdk
-- if [ `uname -m` = x86_64 ]; then wget http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86_64.bin
-  -O ndk.bin; else wget http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86.bin
-  -O ndk.bin; fi
-- 7z x ndk.bin android-ndk-r10d/build/ android-ndk-r10d/ndk-build android-ndk-r10d/platforms/android-21
-  > /dev/null
-- export ANDROID_NDK_HOME=`pwd`/android-ndk-r10d
-- export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
-- echo "sdk.dir=$ANDROID_HOME" > local.properties
-- echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
-script: ./gradlew clean test assembleAndroidTest :card.io:assembleRelease releaseDoc
+  - export ANDROID_HOME=/usr/local/android-sdk
+  - wget https://dl.google.com/android/repository/android-ndk-r13b-linux-x86_64.zip -O ndk.bin
+  - 7z x ndk.bin > /dev/null
+  - export ANDROID_NDK_HOME=`pwd`/android-ndk-r13b
+  - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
+  - echo "sdk.dir=$ANDROID_HOME" > local.properties
+  - echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
+before_script:
+  - echo no | android create avd --force -n test -t android-22 --abi armeabi-v7a
+  - emulator -avd test -camera-back emulated -skin WXGA720 -no-audio -no-window &
+  - android-wait-for-emulator
+  - sleep 60
+  - adb shell input keyevent 82
+script: ./gradlew clean test connectedAndroidTest :card.io:assembleRelease releaseDoc
 notifications:
   webhooks:
     urls:
-    - secure: A1YKQ32CBvm6s0gfwb+UKZuniYdb5ZUENvSpSt/k7nQmyZ9U0p4Sn8qqSSKfRyYVRLT3C3za53aoqFwSqFj6mZ82YO6HbKl/RqhGQLmdIPpyhXKUE5xKlyMbgmAYRBDh41+eQ1i22mkT+jiqVW06VFSB0YyeDKAZjXxk8hfyIUA=
+      - secure: A1YKQ32CBvm6s0gfwb+UKZuniYdb5ZUENvSpSt/k7nQmyZ9U0p4Sn8qqSSKfRyYVRLT3C3za53aoqFwSqFj6mZ82YO6HbKl/RqhGQLmdIPpyhXKUE5xKlyMbgmAYRBDh41+eQ1i22mkT+jiqVW06VFSB0YyeDKAZjXxk8hfyIUA=
     on_success: change
     on_failure: always

@@ -26,7 +26,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.OrientationEventListener;
-import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -75,6 +74,13 @@ public final class CardIOActivity extends Activity {
      * an attempt to extract the expiry from the card image will be made.
      */
     public static final String EXTRA_SCAN_EXPIRY = "io.card.payment.scanExpiry";
+
+    /**
+     * Integer extra. Optional. Defaults to <code>-1</code> (no blur). Privacy feature.
+     * How many of the Card number digits NOT to blur on the resulting image.
+     * Setting it to <code>4</code> will blur all digits except the last four.
+     */
+    public static final String EXTRA_UNBLUR_DIGITS = "io.card.payment.unblurDigits";
 
     /**
      * Boolean extra. Optional. Defaults to <code>false</code>. If set, the user will be prompted
@@ -148,8 +154,8 @@ public final class CardIOActivity extends Activity {
      * <br><br>
      * These localizations are currently included:
      * <br><br>
-     * da, de, en, en_AU, en_GB, es, es_MX, fr, he, is, it, ja, ko, nb, nl, pl, pt, pt_BR, ru,
-     * sv, tr, zh-Hans, zh-Hant, zh-Hant_TW.
+     * ar, da, de, en, en_AU, en_GB, es, es_MX, fr, he, is, it, ja, ko, ms, nb, nl, pl, pt, pt_BR, ru,
+     * sv, th, tr, zh-Hans, zh-Hant, zh-Hant_TW.
      */
     public static final String EXTRA_LANGUAGE_OR_LOCALE = "io.card.payment.languageOrLocale";
 
@@ -322,7 +328,6 @@ public final class CardIOActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG, "onCreate()");
 
         numActivityAllocations++;
         // NOTE: java native asserts are disabled by default on Android.
@@ -481,8 +486,7 @@ public final class CardIOActivity extends Activity {
 
             if (getIntent().getBooleanExtra(PRIVATE_EXTRA_CAMERA_BYPASS_TEST_MODE, false)) {
                 if (!this.getPackageName().contentEquals("io.card.development")) {
-                    Log.e(TAG, this.getPackageName() + " is not correct");
-                    throw new IllegalStateException("illegal access of private extra");
+                    throw new IllegalStateException("Illegal access of private extra");
                 }
                 // use reflection here so that the tester can be safely stripped for release
                 // builds.
@@ -515,8 +519,7 @@ public final class CardIOActivity extends Activity {
         StringKey errorKey = StringKey.ERROR_CAMERA_UNEXPECTED_FAIL;
         String localizedError = LocalizedStrings.getString(errorKey);
 
-        Log.e(Util.PUBLIC_LOG_TAG,
-                "Unknown exception - please send the stack trace to support@card.io", e);
+        Log.e(Util.PUBLIC_LOG_TAG, "Unknown exception, please post the stack trace as a GitHub issue", e);
         Toast toast = Toast.makeText(this, localizedError, Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER, 0, TOAST_OFFSET_Y);
         toast.show();
@@ -524,10 +527,6 @@ public final class CardIOActivity extends Activity {
     }
 
     private void doOrientationChange(int orientation) {
-        // This method calls every time the orientation changes by a degree.
-        // Don't enable logging unless doing rotational testing.
-        // Log.d(TAG, "doOrientationChange(" + orientation + ")");
-
         if (orientation < 0 || mCardScanner == null) {
             return;
         }
@@ -557,8 +556,6 @@ public final class CardIOActivity extends Activity {
             mFrameOrientation = ORIENTATION_LANDSCAPE_RIGHT;
         }
         if (degrees >= 0 && degrees != mLastDegrees) {
-            Log.d(TAG, "onOrientationChanged(" + degrees + ") calling setDeviceOrientation("
-                    + mFrameOrientation + ")");
             mCardScanner.setDeviceOrientation(mFrameOrientation);
             setDeviceDegrees(degrees);
             if (degrees == 90) {
@@ -578,7 +575,6 @@ public final class CardIOActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG, "onResume()");
 
         if(!waitingForPermission) {
             if (manualEntryFallbackOrForced) {
@@ -619,7 +615,6 @@ public final class CardIOActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i(TAG, "onPause()");
 
         if (orientationListener != null) {
             orientationListener.disable();
@@ -633,7 +628,6 @@ public final class CardIOActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        Log.d(TAG, "onDestroy()");
         mOverlay = null;
         numActivityAllocations--;
 
@@ -651,20 +645,15 @@ public final class CardIOActivity extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_REQUEST_ID: {
-                waitingForPermission = false;
-                if (grantResults[0] ==
-                        PackageManager.PERMISSION_GRANTED){
-                    showCameraScannerOverlay();
-
-                } else {
-                    manualEntryFallbackOrForced = true;
-                    // show manual entry - handled in onResume()
-                }
-                onResume();
+    public void onRequestPermissionsResult(int requestCode, String permissions[],
+                                           int[] grantResults) {
+        if (requestCode == PERMISSION_REQUEST_ID) {
+            waitingForPermission = false;
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                showCameraScannerOverlay();
+            } else {
+                // show manual entry - handled in onResume()
+                manualEntryFallbackOrForced = true;
             }
         }
     }
@@ -672,8 +661,6 @@ public final class CardIOActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Log.d(TAG, String.format("onActivityResult(requestCode:%d, resultCode:%d, ...",
-                requestCode, resultCode));
 
         switch (requestCode) {
             case DATA_ENTRY_REQUEST_ID:
@@ -705,8 +692,6 @@ public final class CardIOActivity extends Activity {
      */
     @Override
     public void onBackPressed() {
-        Log.d(TAG, "onBackPressed()");
-
         if (!manualEntryFallbackOrForced && mOverlay.isAnimating()) {
             try {
                 restartPreview();
@@ -783,7 +768,6 @@ public final class CardIOActivity extends Activity {
     // end static
 
     void onFirstFrame(int orientation) {
-        Log.d(TAG, "onFirstFrame(" + orientation + ")");
         SurfaceView sv = mPreview.getSurfaceView();
         if (mOverlay != null) {
             mOverlay.setCameraPreviewRect(new Rect(sv.getLeft(), sv.getTop(), sv.getRight(), sv
@@ -804,8 +788,6 @@ public final class CardIOActivity extends Activity {
     }
 
     void onCardDetected(Bitmap detectedBitmap, DetectionInfo dInfo) {
-        Log.d(TAG, "onCardDetected()");
-
         try {
             Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
             vibrator.vibrate(VIBRATE_PATTERN, -1);
@@ -833,7 +815,6 @@ public final class CardIOActivity extends Activity {
         }
 
         Matrix m = new Matrix();
-        Log.d(TAG, "Scale factor: " + sf);
         m.postScale(sf, sf);
 
         Bitmap scaledCard = Bitmap.createBitmap(detectedBitmap, 0, 0, detectedBitmap.getWidth(),
@@ -851,8 +832,6 @@ public final class CardIOActivity extends Activity {
     }
 
     private void nextActivity() {
-        Log.d(TAG, "nextActivity()");
-
         final Intent origIntent = getIntent();
         if (origIntent != null && origIntent.getBooleanExtra(EXTRA_SUPPRESS_CONFIRMATION, false)) {
             Intent dataIntent = new Intent(CardIOActivity.this, DataEntryActivity.class);
@@ -868,8 +847,6 @@ public final class CardIOActivity extends Activity {
             new Handler().post(new Runnable() {
                 @Override
                 public void run() {
-                    Log.d(TAG, "post(Runnable)");
-
                     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
@@ -917,8 +894,6 @@ public final class CardIOActivity extends Activity {
     }
 
     private boolean restartPreview() {
-        Log.d(TAG, "restartPreview()");
-
         mDetectedCard = null;
         assert mPreview != null;
         boolean success = mCardScanner.resumeScanning(mPreview.getSurfaceHolder());

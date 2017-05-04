@@ -21,12 +21,12 @@ ext {
 }
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdkVersion rootProject.ext.sdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion 8
-        targetSdkVersion 23
+        minSdkVersion 16
+        targetSdkVersion rootProject.ext.sdkVersion
 
         buildConfigField "String", "PRODUCT_NAME", "\"${product_name}\""
         buildConfigField "String", "PRODUCT_VERSION", "\"${product_version}\""
@@ -34,8 +34,10 @@ android {
 
         consumerProguardFiles 'release-proguard.cfg'
 
-        testApplicationId 'io.card.development'
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
+    resourcePrefix 'cio_'
 
     sourceSets.main {
         jni.srcDirs = []
@@ -85,7 +87,8 @@ android {
 }
 
 dependencies {
-    androidTestCompile "com.jayway.android.robotium:robotium-solo:5.2.1"
+    testCompile "junit:junit:4.12"
+    testCompile "org.robolectric:robolectric:3.1.2"
 }
 
 // TODO remove the variant specific stuff from below - card.io doesn't have flavors
@@ -151,11 +154,14 @@ android.libraryVariants.all { variant ->
         sign configurations.archives
     }
 
-    // these should be specified in the gradle.properties file as:
-    // systemProp.sonatypeUsername=xxxxxxx
-    // systemProp.sonatypePassword=yyyyyyy
-    def sonatypeUsername = System.properties.containsKey('sonatypeUsername') ? System.properties['sonatypeUsername'] : ''
-    def sonatypePassword = System.properties.containsKey('sonatypePassword') ? System.properties['sonatypePassword'] : ''
+    // these should be specified in the local.properties file as:
+    // sonatypeUsername=xxxxxxx
+    // sonatypePassword=yyyyyyy
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def sonatypeUsername = properties.getProperty('sonatypeUsername')
+    def sonatypePassword = properties.getProperty('sonatypePassword')
 
     nexusStaging {
         packageGroup = "io.card"
@@ -165,6 +171,7 @@ android.libraryVariants.all { variant ->
 
     uploadArchives {
         doFirst {
+            assert sonatypeUsername != null && sonatypePassword != null : "Please set sonatypeUsername and sonatypePassword in local.properties"
             println "***"
             println "uploading archives using username: '" + sonatypeUsername + "'"
             println "***"
